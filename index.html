@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS</title>
+<style>
+  body{margin:0;background:#020b14;color:#00e5ff;font-family:monospace;
+       display:flex;flex-direction:column;align-items:center;height:100vh}
+  h1{letter-spacing:8px;margin:20px 0 0;text-shadow:0 0 15px #00e5ff}
+  #status{font-size:13px;opacity:.7;margin:6px}
+  #orb{width:150px;height:150px;border-radius:50%;margin:25px;
+       border:3px solid #00e5ff;box-shadow:0 0 30px #00e5ff,inset 0 0 30px #00e5ff;
+       animation:pulse 3s infinite;display:flex;align-items:center;
+       justify-content:center;font-size:40px}
+  #orb.on{animation:pulse .6s infinite;background:#00e5ff33}
+  @keyframes pulse{50%{transform:scale(1.1);box-shadow:0 0 60px #00e5ff}}
+  #log{flex:1;width:90%;overflow-y:auto;border:1px solid #00e5ff55;
+       border-radius:10px;padding:10px;font-size:14px}
+  .me{color:#fff}.ai{color:#00e5ff}
+  .bar{display:flex;gap:10px;margin:15px}
+  button{background:none;color:#00e5ff;border:2px solid #00e5ff;border-radius:30px;
+         padding:14px 26px;font-size:16px;font-family:monospace}
+  button:active{background:#00e5ff44}
+</style>
+</head>
+<body>
+<h1>J.A.R.V.I.S</h1>
+<div id="status">SYSTEM ONLINE</div>
+<div id="orb">🎙</div>
+<div id="log"></div>
+<div class="bar">
+  <button id="mic">SPEAK</button>
+  <button id="lang">EN</button>
+</div>
+
+<script>
+let lang = "en-IN";
+const log = document.getElementById("log");
+const orb = document.getElementById("orb");
+const status = document.getElementById("status");
+
+function add(cls, text){
+  log.innerHTML += `<p class="${cls}">${cls=="me"?"YOU":"JARVIS"}: ${text}</p>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function speak(text){
+  add("ai", text);
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang;
+  speechSynthesis.speak(u);
+}
+
+function think(q){
+  q = q.toLowerCase();
+  if(/hello|hi|namaste|नमस्ते|हेलो/.test(q))
+    return lang=="hi-IN" ? "नमस्ते! मैं जार्विस हूँ। मैं आपकी क्या मदद करूँ?" : "Hello! I am JARVIS. How can I help you?";
+  if(/time|समय|टाइम/.test(q))
+    return (lang=="hi-IN" ? "अभी समय है " : "The time is ") + new Date().toLocaleTimeString();
+  return lang=="hi-IN" ? "आपने कहा: " + q : "You said: " + q;
+}
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const rec = new SR();
+rec.onstart = ()=>{orb.classList.add("on"); status.textContent="LISTENING...";};
+rec.onend = ()=>{orb.classList.remove("on"); status.textContent="SYSTEM ONLINE";};
+rec.onresult = e=>{
+  const said = e.results[0][0].transcript;
+  add("me", said);
+  speak(think(said));
+};
+rec.onerror = e=>{status.textContent="ERROR: "+e.error;};
+
+document.getElementById("mic").onclick = ()=>{
+  rec.lang = lang;
+  rec.start();
+};
+document.getElementById("lang").onclick = e=>{
+  lang = (lang=="en-IN") ? "hi-IN" : "en-IN";
+  e.target.textContent = lang=="hi-IN" ? "HI" : "EN";
+  speak(lang=="hi-IN" ? "हिंदी चालू" : "English mode on");
+};
+</script>
+</body>
+</html>
